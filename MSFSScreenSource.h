@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 #include <memory>
+#include <utility>
 #include <atomic>
 
 namespace FMC_Server
@@ -15,13 +16,12 @@ public:
     MSFSScreenSource();
     ~MSFSScreenSource() override;
     void Start(std::function<void(const char*)> f) override;
-    void Test() override;
     void ButtonClick(std::string btn) override;
     void Invalidate() override;
 
 private:
     HANDLE hSimConnect_ = nullptr;
-    std::unique_ptr<Screen> screen_ = nullptr;
+    std::pair<std::unique_ptr<Screen>, std::unique_ptr<Screen>> screens_;
     bool invalidated_ = false;
 };
 } // namespace MFC_Server

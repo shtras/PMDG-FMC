@@ -1,11 +1,8 @@
 #include "DummyScreenSource.h"
 
 #include <Windows.h>
-#define RAPIDJSON_HAS_STDSTRING 1
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 #include <string>
 
@@ -18,47 +15,32 @@ void DummyScreenSource::Start(std::function<void(const char*)> f)
     constexpr int CDU_COLUMNS = 24;
     running_ = true;
     while (running_) {
-        rapidjson::Document d;
-        d.SetObject();
-        auto& a = d.GetAllocator();
+        nlohmann::json j;
         for (int y = 0; y < CDU_ROWS; ++y) {
-            rapidjson::Value row(rapidjson::kObjectType);
+            auto yStr = std::to_string(y);
             for (int x = 0; x < CDU_COLUMNS; ++x) {
+                auto xStr = std::to_string(x);
                 char text = 'A' + (x + y) % 26;
                 if (x % 5 == 0 || y % 7 == 0) {
                     //text = ' ';
                 }
-                rapidjson::Value key(std::to_string(x), a);
-                rapidjson::Value value(std::string(1, text), a);
-                rapidjson::Value cell(rapidjson::kObjectType);
-                cell.AddMember("text", value, a);
-
+                j[yStr][xStr]["text"] = std::string(1, text);
                 if (smallRows_.count(y) > 0) {
-                    cell.AddMember("small", true, a);
+                    j[yStr][xStr]["small"] = true;
                 }
                 if (reverseRows_.count(y) > 0) {
-                    cell.AddMember("reverse", true, a);
+                    j[yStr][xStr]["reverse"] = true;
                 }
                 if (unusedRows_.count(y) > 0) {
-                    cell.AddMember("unused", true, a);
+                    j[yStr][xStr]["unused"] = true;
                 }
 
                 if (colorRows_.count(y) > 0) {
-                    cell.AddMember("color", colors_[colorRows_[y]], a);
+                    j[yStr][xStr]["color"] = colors_[colorRows_[y]];
                 }
-
-                row.AddMember(key, cell, a);
             }
-            rapidjson::Value colKey(std::to_string(y), a);
-            d.AddMember(colKey, row, a);
         }
-
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        d.Accept(writer);
-
-        f(buffer.GetString());
-
+        f(j.dump().c_str());
         Sleep(1000);
     }
     stoppingSem_.release();

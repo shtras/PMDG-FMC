@@ -16,13 +16,12 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/" ${CMAKE_MODULE_PATH})
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(civetweb CONFIG REQUIRED)
-find_package(RapidJSON CONFIG REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(SimConnect REQUIRED)
 
 add_executable (FMC_server
 				"FMC.cpp" 
-				 "PMDG_NG3_SDK.h" "ScreenSource.h" "MSFSScreenSource.h" "MSFSScreenSource.cpp" "DummyScreenSource.h" "DummyScreenSource.cpp" "Finally.h")
+				 "PMDG_NG3_SDK.h" "ScreenSource.h" "MSFSScreenSource.h" "MSFSScreenSource.cpp" "DummyScreenSource.h" "DummyScreenSource.cpp" "Finally.h" "event_definitions_inl.h")
 
-target_link_libraries(FMC_server PUBLIC fmc_compiler_flags spdlog::spdlog civetweb::civetweb-cpp rapidjson nlohmann_json::nlohmann_json ${SIM_CONNECT_LIBRARY})
+target_link_libraries(FMC_server PUBLIC fmc_compiler_flags spdlog::spdlog civetweb::civetweb-cpp nlohmann_json::nlohmann_json ${SIM_CONNECT_LIBRARY})
 target_include_directories(FMC_server PRIVATE ${CMAKE_SOURCE_DIR} ${SIM_CONNECT_INCLUDE_DIR})
