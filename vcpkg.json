@@ -1,0 +1,10 @@
+{
+  "name": "mfc-server",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "spdlog",
+    "civetweb",
+    "rapidjson",
+    "nlohmann-json"
+  ]
+}
