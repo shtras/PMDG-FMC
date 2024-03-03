@@ -150,8 +150,18 @@ public:
         return j;
     }
 
+    bool SetExec(bool value)
+    {
+        if (exec_ == value) {
+            return false;
+        }
+        exec_ = value;
+        return true;
+    }
+
 private:
     std::array<std::array<Cell, CDU_COLUMNS>, CDU_ROWS> cells_;
+    bool exec_ = false;
 };
 
 MSFSScreenSource::MSFSScreenSource()
@@ -188,7 +198,11 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
     spdlog::info("SimConnect opened");
     // Associate an ID with the PMDG data area name
     hr = SimConnect_MapClientDataNameToID(hSimConnect_, PMDG_NG3_CDU_0_NAME, PMDG_NG3_CDU_0_ID);
+    assert(SUCCEEDED(hr));
     hr = SimConnect_MapClientDataNameToID(hSimConnect_, PMDG_NG3_CDU_1_NAME, PMDG_NG3_CDU_1_ID);
+    assert(SUCCEEDED(hr));
+    hr = SimConnect_MapClientDataNameToID(hSimConnect_, PMDG_NG3_DATA_NAME, PMDG_NG3_DATA_ID);
+    assert(SUCCEEDED(hr));
 
     for (const auto& eventMapping : EventsMap) {
         std::stringstream ss;
@@ -203,8 +217,13 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
     // Define the data area structure - this is a required step
     hr = SimConnect_AddToClientDataDefinition(
         hSimConnect_, PMDG_NG3_CDU_0_DEFINITION, 0, sizeof(PMDG_NG3_CDU_Screen), 0, 0);
+    assert(SUCCEEDED(hr));
     hr = SimConnect_AddToClientDataDefinition(
         hSimConnect_, PMDG_NG3_CDU_1_DEFINITION, 0, sizeof(PMDG_NG3_CDU_Screen), 0, 0);
+    assert(SUCCEEDED(hr));
+    hr = SimConnect_AddToClientDataDefinition(
+        hSimConnect_, PMDG_NG3_DATA_DEFINITION, 0, sizeof(PMDG_NG3_Data), 0, 0);
+    assert(SUCCEEDED(hr));
 
     // Sign up for notification of data change.
     // SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_CHANGED flag asks for the data to be sent only when some of the data is changed.
@@ -214,6 +233,11 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
         spdlog::error("Request CDU1 failed");
     }
     hr = SimConnect_RequestClientData(hSimConnect_, PMDG_NG3_CDU_1_ID, CDU_R_DATA_REQUEST, PMDG_NG3_CDU_1_DEFINITION,
+        SIMCONNECT_CLIENT_DATA_PERIOD_VISUAL_FRAME, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_CHANGED, 0, 0, 0);
+    if (FAILED(hr)) {
+        spdlog::error("Request CDU2 failed");
+    }
+    hr = SimConnect_RequestClientData(hSimConnect_, PMDG_NG3_DATA_ID, DATA_REQUEST, PMDG_NG3_DATA_DEFINITION,
         SIMCONNECT_CLIENT_DATA_PERIOD_VISUAL_FRAME, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_CHANGED, 0, 0, 0);
     if (FAILED(hr)) {
         spdlog::error("Request CDU2 failed");
@@ -242,15 +266,35 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
                             success = true;
                             break;
                         }
-                        case CDU_R_DATA_REQUEST:
+                        case CDU_R_DATA_REQUEST: {
                             spdlog::info("CDU R");
                             screen = (PMDG_NG3_CDU_Screen*)&pObjData->dwData;
                             j["R"] = screens_.second->Assign(screen);
                             success = true;
                             break;
+                        }
+                        case DATA_REQUEST: {
+                            PMDG_NG3_Data* data = (PMDG_NG3_Data*)&pObjData->dwData;
+                            bool send = false;
+                            if (screens_.first->SetExec(data->CDU_annunEXEC[0])) {
+                                j["leftExec"] = data->CDU_annunEXEC[0];
+                                success = true;
+                            }
+                            if (screens_.second->SetExec(data->CDU_annunEXEC[1])) {
+                                j["rightExec"] = data->CDU_annunEXEC[1];
+                                success = true;
+                            }
+                            break;
+                        }
+                        default:
+                            spdlog::info("Inner Event {}", pObjData->dwRequestID);
+                            break;
                     }
                     break;
                 }
+                default:
+                    spdlog::info("Outer Event {}", pData->dwID);
+                    break;
             }
         }
         if (!success) {
@@ -260,7 +304,6 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
                 f(j.dump().c_str());
                 invalidated_ = false;
             }
-            Sleep(50);
             continue;
         }
         f(j.dump().c_str());
