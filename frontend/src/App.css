@@ -1,0 +1,140 @@
+body {
+  text-align: center;
+  display: flex;
+}
+
+div {
+  /*border: 1px solid blue;*/
+}
+
+div.fmc {
+  display: flex;
+  flex-flow: column;
+  padding-left: 20px;
+}
+
+div.keypad-outter {
+  display: flex;
+  justify-content: space-around;
+}
+
+div.keypad-left {
+  display: flex;
+}
+
+div.keypad {
+  display: flex;
+  flex-direction: column;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  width: 90%;
+  background-color: lightslategray;
+}
+
+div.screen {
+  font-family: monospace;
+  font-size: 35px;
+  margin: auto;
+}
+
+div.row {
+  display: flex;
+  max-height: 45px;
+  background-color: black;
+}
+
+div.multi-fmc {
+  display: flex;
+  justify-content: space-between;
+}
+
+div.letter {
+  width: 30px;
+  max-height: 45px;
+  background-color: black;
+  text-align: center;
+  vertical-align: middle;
+}
+
+div.small {
+  font-size: 30px;
+  margin-top: auto;
+}
+
+div.upper-keys {
+  display: flex;
+  padding-left: 40px;
+  padding-right: 50px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+div.digit-keys {
+  display: flex;
+  justify-content: space-around;
+  padding-left: 40px;
+  padding-right: 20px;
+  padding-top: 8px;
+  padding-bottom: 7px;
+}
+
+div.letter-keys {
+  display: flex;
+  justify-content: space-around;
+  padding-left: 10px;
+  padding-right: 60px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+div.exec-light {
+  width: 85px;
+  border: 3pt black solid;
+  border-radius: 3pt;
+  margin-left: 20px;
+  margin-top: 50px;
+}
+
+div.exec-light-off {
+  background-color: darkred;
+}
+
+div.exec-light-on {
+  background-color: greenyellow;
+}
+
+button.function-key {
+  width: 95px;
+  height: 65px;
+  border: 5pt #4e584b solid;
+  border-radius: 5pt;
+  background-color: #323429;
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-left: 20px;
+}
+
+button.letter-key {
+  width: 60px;
+  height: 60px;
+  border: 3pt #3e463c solid;
+  border-radius: 4pt;
+  background-color: #262626;
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-left: 20px;
+}
+
+button.digit-key {
+  width: 60px;
+  height: 60px;
+  border: 3pt #3e463c solid;
+  border-radius: 45pt;
+  background-color: #262626;
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-left: 20px;
+}
