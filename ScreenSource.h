@@ -21,11 +21,11 @@ public:
     virtual void Start(std::function<void(const char*)> f) = 0;
     void Stop()
     {
-        spdlog::info("Stopping source...");
-        finally f([] { spdlog::info("Stopped source"); });
         if (!running_) {
             return;
         }
+        spdlog::info("Stopping source...");
+        finally f([] { spdlog::info("Stopped source"); });
         running_ = false;
         stoppingSem_.acquire();
     }

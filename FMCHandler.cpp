@@ -12,6 +12,11 @@ FMCHandler::FMCHandler(bool dummy, std::string uri)
     }
 }
 
+FMCHandler::~FMCHandler()
+{
+    Stop();
+}
+
 bool FMCHandler::handleGet(CivetServer* server, mg_connection* conn)
 {
     const mg_request_info* req_info = mg_get_request_info(conn);
@@ -23,13 +28,12 @@ bool FMCHandler::handleGet(CivetServer* server, mg_connection* conn)
                         "text/event-stream\r\nAccess-Control-Allow-Origin: *\r\n\r\n");
         activeSessions_.insert(conn);
         int i = 0;
-        for (;;) {
+        while (running_) {
             if (activeSessions_.count(conn) == 0) {
                 break;
             }
             Sleep(1000);
         }
-
         return true;
     }
     return false;
@@ -53,17 +57,8 @@ bool FMCHandler::handlePost(CivetServer* server, mg_connection* conn)
         source_->Invalidate();
         return true;
     } else if (uri == uri_ + "/toggle_dummy") {
-        source_->Stop();
-        if (sourceThread_.joinable()) {
-            sourceThread_.join();
-        }
-        if (dummy_) {
-            source_ = std::make_shared<FMC_Server::MSFSScreenSource>();
-        } else {
-            source_ = std::make_shared<FMC_Server::DummyScreenSource>();
-        }
-        dummy_ = !dummy_;
-        Start();
+        ToggleDummy();
+        return true;
     }
     return false;
 }
@@ -71,6 +66,33 @@ bool FMCHandler::handlePost(CivetServer* server, mg_connection* conn)
 void FMCHandler::Start()
 {
     sourceThread_ = std::thread([this]() { source_->Start([this](const char* s) { sendToSessions(s); }); });
+}
+
+void FMCHandler::Stop()
+{
+    if (!running_) {
+        return;
+    }
+    running_ = false;
+    source_->Stop();
+    if (sourceThread_.joinable()) {
+        sourceThread_.join();
+    }
+}
+
+void FMCHandler::ToggleDummy()
+{
+    source_->Stop();
+    if (sourceThread_.joinable()) {
+        sourceThread_.join();
+    }
+    if (dummy_) {
+        source_ = std::make_shared<FMC_Server::MSFSScreenSource>();
+    } else {
+        source_ = std::make_shared<FMC_Server::DummyScreenSource>();
+    }
+    dummy_ = !dummy_;
+    Start();
 }
 
 void FMCHandler::sendToSessions(const char* s)

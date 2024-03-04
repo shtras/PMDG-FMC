@@ -18,10 +18,13 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(civetweb CONFIG REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(SimConnect REQUIRED)
+find_package(wxWidgets CONFIG REQUIRED)
 
-add_executable (FMC_server
-				FMC.cpp MSFSScreenSource.cpp DummyScreenSource.cpp FrontendHandler.cpp FMCHandler.cpp)
-file(COPY frontend DESTINATION .)
+add_executable (FMC_server WIN32
+				"main.cpp" MSFSScreenSource.cpp DummyScreenSource.cpp FrontendHandler.cpp FMCHandler.cpp "FMC.cpp" "FMC.h")
+
+file(COPY frontend/build/ DESTINATION frontend)
 file(COPY SimConnect.dll DESTINATION .)
-target_link_libraries(FMC_server PUBLIC fmc_compiler_flags spdlog::spdlog civetweb::civetweb-cpp nlohmann_json::nlohmann_json ${SIM_CONNECT_LIBRARY})
+
+target_link_libraries(FMC_server PUBLIC fmc_compiler_flags spdlog::spdlog civetweb::civetweb-cpp nlohmann_json::nlohmann_json wx::core wx::base ${SIM_CONNECT_LIBRARY})
 target_include_directories(FMC_server PRIVATE ${CMAKE_SOURCE_DIR} ${SIM_CONNECT_INCLUDE_DIR})

@@ -1,24 +1,42 @@
-﻿#include "FMC.h"
+#include "FMC.h"
 
-#include "FMCHandler.h"
 #include "FrontendHandler.h"
 
-#include <windows.h>
-
-#include <spdlog/spdlog.h>
+#include <winsock2.h>
 #include <CivetServer.h>
 #include "PMDG_NG3_SDK.h"
 #include <SimConnect.h>
 
-
-
-int main()
+namespace FMC_Server
 {
-    spdlog::info("Hello CMake.");
+void FMC::Start(const std::string& port)
+{
+    port_ = port;
+    running_ = true;
+    runThread_ = std::thread(&FMC::threadProc, this);
+    spdlog::info("start completed");
+}
 
+void FMC::Stop()
+{
+    running_ = false;
+    if (runThread_.joinable()) {
+        runThread_.join();
+    }
+}
+
+void FMC::ToggleDummy()
+{
+    if (fmcHandler_) {
+        fmcHandler_->ToggleDummy();
+    }
+}
+
+void FMC::threadProc()
+{
     mg_init_library(0);
 
-    const char* options[] = {"listening_ports", "3456", 0};
+    const char* options[] = {"listening_ports", port_.c_str(), 0};
 
     std::vector<std::string> cpp_options;
     for (int i = 0; i < (sizeof(options) / sizeof(options[0]) - 1); i++) {
@@ -26,17 +44,22 @@ int main()
     }
     CivetServer server(cpp_options);
 
-    FMC_Server::FMCHandler h_ex(true, "/fmc");
-    server.addHandler("/fmc", h_ex);
+    fmcHandler_ = std::make_unique<FMCHandler>(true, "/fmc");
+    server.addHandler("/fmc", *fmcHandler_);
 
-    FMC_Server::FrontendHandler frontendHandler("", "frontend");
+    FrontendHandler frontendHandler("", "frontend");
     server.addHandler("", frontendHandler);
-    h_ex.Start();
 
-    for (;;) {
+    fmcHandler_->Start();
+
+    while (running_) {
         Sleep(1000);
     }
 
+    fmcHandler_->Stop();
+    server.close();
     mg_exit_library();
-    return 0;
+    fmcHandler_.reset();
+    spdlog::info("Threadproc finished");
 }
+} // namespace FMC_Server

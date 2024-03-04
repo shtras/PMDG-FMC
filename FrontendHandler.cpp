@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <set>
 
 namespace
 {
@@ -12,6 +13,7 @@ std::map<std::string, std::string> contentTypes = {{"html", "text/html"}, {"css"
     {"js", "text/javascript"}, {"png", "image/png"}, {"ico", "image/x-icon"}, {"json", "application/json"},
     {"wav", "audio/wav"}, {"txt", "text/plain"}, {"map", "text/plain"}};
 }
+std::set<std::string> binaryTypes = {"ico", "png", "wav"};
 
 namespace FMC_Server
 {
@@ -27,7 +29,7 @@ bool FrontendHandler::handleGet(CivetServer* server, mg_connection* conn)
     const mg_request_info* req_info = mg_get_request_info(conn);
     std::string uri = req_info->request_uri;
 
-    spdlog::info("Frontend: {}", uri);
+    spdlog::info("Frontend path access: {}", uri);
 
     if (uri == "/") {
         uri = "/index.html";
@@ -52,14 +54,14 @@ bool FrontendHandler::handleGet(CivetServer* server, mg_connection* conn)
     mg_printf(conn, "HTTP/1.1 200 OK\r\nContent-Type: ");
     mg_printf(conn, contentType->second.c_str());
     std::ios_base::openmode openMode = std::ios_base::in;
-    if (extension == "ico" || extension == "png" || extension == "wav") {
+    if (binaryTypes.count(extension) != 0) {
         mg_printf(conn, "\r\nContent-Length: ");
         mg_printf(conn, std::to_string(fs::file_size(path)).c_str());
 
         openMode |= std::ios_base::binary;
     }
     mg_printf(conn, "\r\n\r\n");
-    
+
     mg_send_file(conn, filePath.c_str());
 
     return true;

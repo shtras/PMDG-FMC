@@ -190,7 +190,12 @@ void MSFSScreenSource::Start(std::function<void(const char*)> f)
         if (FAILED(hr)) {
             spdlog::error("Failed to open SimConnect. Will retry in 30 seconds...");
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(30s);
+            for (int i = 0; i < 30; ++i) {
+                std::this_thread::sleep_for(1s);
+                if (!running_) {
+                    return;
+                }
+            }
             continue;
         }
         break;

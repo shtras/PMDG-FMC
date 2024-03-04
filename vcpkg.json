@@ -4,7 +4,7 @@
   "dependencies": [
     "spdlog",
     "civetweb",
-    "rapidjson",
-    "nlohmann-json"
+    "nlohmann-json",
+    "wxwidgets"
   ]
 }
